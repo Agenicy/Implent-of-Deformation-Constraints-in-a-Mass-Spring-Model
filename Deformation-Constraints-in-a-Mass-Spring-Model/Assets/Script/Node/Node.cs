@@ -1,14 +1,13 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+[SelectionBase]
 public class Node : MonoBehaviour
 {
-    public Vector2 v2_Position;
+    public Vector3 v3_Position=> transform.position;
 
-    public void Setup(int x, int y)
+    public void Setup(float x, float y, float z)
     {
-        v2_Position = new Vector2(x, y);
+        transform.SetPositionAndRotation(new Vector3(x,y,z), Quaternion.Euler(0, 0, 0));
     }
-
 }
