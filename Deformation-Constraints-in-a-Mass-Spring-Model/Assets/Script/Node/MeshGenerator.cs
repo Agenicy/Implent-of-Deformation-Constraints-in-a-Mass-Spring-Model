@@ -12,7 +12,7 @@ public class MeshGenerator : MonoBehaviour
 
     float f_GridSize = 3.0f;
 
-    public static List<Node> list_node_AllNode = new List<Node>();
+    public static Node[,] node_arr;
 
     private void Awake()
     {
@@ -24,52 +24,80 @@ public class MeshGenerator : MonoBehaviour
         GetComponent<MeshFilter>().mesh = mesh = new Mesh();
         mesh.name = "Procedural Grid";
 
-        for (int i = 0, y = 0; y <= ySize; y++)
+        node_arr = new Node[xSize + 1, ySize + 1];
+
+        for (int y = 0; y <= ySize; y++)
         {
-            for (int x = 0; x <= xSize; x++, i++)
+            for (int x = 0; x <= xSize; x++)
             {
                 GameObject gobj_node = Instantiate(prefab_Node, transform);
-                gobj_node.transform.position = new Vector3(x* f_GridSize, y* f_GridSize, 0);
+                gobj_node.transform.position = new Vector3(x * f_GridSize, y * f_GridSize, 0);
 
                 Node node = gobj_node.GetComponent<Node>();
                 node.Setup(x * f_GridSize, y * f_GridSize, 0);
-                list_node_AllNode.Add(node);
-
+                node_arr[x, y] = node;
             }
         }
-    }
+        node_arr[0, ySize].rigidbody.isKinematic = true;
+        node_arr[xSize, ySize].rigidbody.isKinematic = true;
 
-    private void Update()
-    {
-        mesh.vertices = list_node_AllNode.Select((n)=>n.v3_Position).ToArray();
-
-        int[] triangles = new int[xSize * ySize * 6];
-        for (int ti = 0, vi = 0, y = 0; y < ySize; y++, vi++)
+        Node GetNode(int i, int j)
         {
-            for (int x = 0; x < xSize; x++, ti += 6, vi++)
+            return (i >= 0 && i < node_arr.GetLength(0) && j >= 0 && j < node_arr.GetLength(1)) ? node_arr[i, j] : null;
+        };
+
+        for (int x = 0; x <= xSize; x++)
+            for (int y = 0; y <= ySize; y++)
             {
-                triangles[ti] = vi;
-                triangles[ti + 3] = triangles[ti + 2] = vi + 1;
-                triangles[ti + 4] = triangles[ti + 1] = vi + xSize + 1;
-                triangles[ti + 5] = vi + xSize + 2;
+                Node.Link(GetNode(x, y), GetNode(x + 1, y), Spring.ForceType.Structural);
+                Node.Link(GetNode(x, y), GetNode(x, y + 1), Spring.ForceType.Structural);
+
+                Node.Link(GetNode(x, y), GetNode(x + 1, y + 1), Spring.ForceType.Shear);
+                Node.Link(GetNode(x + 1, y), GetNode(x, y + 1), Spring.ForceType.Shear);
+
+                Node.Link(GetNode(x, y), GetNode(x + 2, y), Spring.ForceType.Flexion);
+                Node.Link(GetNode(x, y), GetNode(x, y + 2), Spring.ForceType.Flexion);
             }
-        }
-        mesh.triangles = triangles;
-        mesh.RecalculateNormals();
+
+        StartCoroutine(IUpdate());
     }
 
-
-        /*
-    private void OnDrawGizmos()
+    IEnumerator IUpdate()
     {
-        if (list_node_AllNode.Count == 0)
+        while (true)
         {
-            return;
+            List<Vector3> vertices = new List<Vector3>();
+            for (int y = 0; y <= ySize; y++)
+                for (int x = 0; x <= xSize; x++)
+                    vertices.Add(node_arr[x, y].v3_Position);
+
+            mesh.vertices = vertices.ToArray();
+
+            int[] triangles = new int[xSize * ySize * 6];
+            for (int ti = 0, vi = 0, y = 0; y < ySize; y++, vi++)
+            {
+                for (int x = 0; x < xSize; x++, ti += 6, vi++)
+                {
+                    triangles[ti] = vi;
+                    triangles[ti + 3] = triangles[ti + 2] = vi + 1;
+                    triangles[ti + 4] = triangles[ti + 1] = vi + xSize + 1;
+                    triangles[ti + 5] = vi + xSize + 2;
+                }
+            }
+            mesh.triangles = triangles;
+            mesh.RecalculateNormals();
+
+            yield return new WaitForSeconds(Node.f_DeltaTime);
+
+            foreach (var sp in Spring.list_spring_AllSpring)
+                sp.Compute();
+
+            for (int x = 0; x <= xSize; x++)
+                for (int y = 0; y <= ySize; y++)
+                    node_arr[x, y].Compute();
+            Debug.Log("Tick");
+
         }
-        Gizmos.color = Color.black;
-        for (int i = 0; i < list_node_AllNode.Count; i++)
-        {
-            Gizmos.DrawSphere(list_node_AllNode[i].v3_Position, 0.1f);
-        }
-    }*/
+    }
+
 }
