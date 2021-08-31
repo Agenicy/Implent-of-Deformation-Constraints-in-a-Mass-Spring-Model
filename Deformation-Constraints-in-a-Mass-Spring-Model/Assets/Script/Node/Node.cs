@@ -8,9 +8,9 @@ public class Node : MonoBehaviour
     {
         get => transform.position;
         set
-        { 
-            if (!rigidbody.isKinematic) 
-                transform.SetPositionAndRotation(value, Quaternion.Euler(0, 0, 0)); 
+        {
+            if (!rigidbody.isKinematic)
+                transform.SetPositionAndRotation(value, Quaternion.Euler(0, 0, 0));
         }
     }
 
@@ -23,7 +23,7 @@ public class Node : MonoBehaviour
     float f_Mass => rigidbody.mass;
 
     Vector3 v3_Gravity => f_Mass * 9.8f * Vector3.down;
-    Vector3 v3_Viscous => Vector3.zero;
+    Vector3 v3_Viscous => -velocity;
 
     float f_Tou => 0.1f;
 
@@ -59,6 +59,9 @@ public class Node : MonoBehaviour
         accel = v3_TotalForce / f_Mass;
         velocity = velocity + f_DeltaTime * accel;
         v3_Position = v3_Position + f_DeltaTime * velocity;
+
+        float mag = 1.0f / (1.0f + (float)Mathf.Exp(-v3_TotalForce.magnitude / 30f));
+        Debug.DrawLine(v3_Position, v3_Position + v3_TotalForce.normalized * 2, Color.Lerp(Color.green, Color.yellow, mag), Node.f_DeltaTime);
     }
 }
 
@@ -95,8 +98,8 @@ public class Spring
 
     public void Compute()
     {
-        float noeLength = Vector3.Distance(m.v3_Position, n.v3_Position);
-        float deltaX = noeLength - f_OriginialLength;
+        float nowLength = Vector3.Distance(m.v3_Position, n.v3_Position);
+        float deltaX = Mathf.Max(nowLength - f_OriginialLength, 0);
 
         v3_ForceAtM = f_K * (n.v3_Position - m.v3_Position) * deltaX;
 
