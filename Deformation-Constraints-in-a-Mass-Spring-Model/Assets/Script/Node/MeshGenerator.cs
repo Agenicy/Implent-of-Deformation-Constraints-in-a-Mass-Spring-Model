@@ -5,18 +5,25 @@ using UnityEngine;
 
 public class MeshGenerator : MonoBehaviour
 {
+    public static MeshGenerator Get;
+
     [SerializeField] int xSize;
     [SerializeField] int ySize;
     [SerializeField] GameObject prefab_Node;
     Mesh mesh;
 
-    float f_GridSize = 3.0f;
+    public float f_GridSize;
 
     public static Node[,] node_arr;
 
     private void Awake()
     {
+        Get = this;
         Generate();
+    }
+    void OnDestroy()
+    {
+        Get = null;
     }
 
     private void Generate()
@@ -73,7 +80,7 @@ public class MeshGenerator : MonoBehaviour
 
             mesh.vertices = vertices.ToArray();
 
-            int[] triangles = new int[xSize * ySize * 6];
+            int[] triangles = new int[xSize * ySize * 6 ];
             for (int ti = 0, vi = 0, y = 0; y < ySize; y++, vi++)
             {
                 for (int x = 0; x < xSize; x++, ti += 6, vi++)
@@ -87,17 +94,13 @@ public class MeshGenerator : MonoBehaviour
             mesh.triangles = triangles;
             mesh.RecalculateNormals();
 
-            yield return new WaitForSeconds(Node.f_DeltaTime);
-
             foreach (var sp in Spring.list_spring_AllSpring)
                 sp.Compute();
-
-            yield return new WaitForSeconds(Node.f_DeltaTime);
 
             for (int x = 0; x <= xSize; x++)
                 for (int y = 0; y <= ySize; y++)
                     node_arr[x, y].Compute();
-            Debug.Log("Tick");
+
 
             yield return new WaitForSeconds(Node.f_DeltaTime);
         }

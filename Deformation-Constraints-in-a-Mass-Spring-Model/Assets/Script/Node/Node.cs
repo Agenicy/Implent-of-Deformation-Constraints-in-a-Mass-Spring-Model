@@ -23,7 +23,25 @@ public class Node : MonoBehaviour
     float f_Mass => rigidbody.mass;
 
     Vector3 v3_Gravity => f_Mass * 9.8f * Vector3.down;
-    Vector3 v3_Viscous => -velocity;
+
+    Vector3 v3_Norm
+    {
+        get
+        {
+            Vector3 center = Vector3.zero;
+            foreach (var spring in list_spring)
+            {
+                center += spring.GetForce(this);
+            }
+
+            return Vector3.Cross(list_spring[0].GetForce(this) - center, list_spring[1].GetForce(this) - center).normalized;
+        }
+    }
+
+    Vector3 v3_WindEffect => Vector3.forward * f_Mass * 10;
+    float f_DampingCoefficient = 1.0f;
+    Vector3 v3_Viscous_Wind => f_DampingCoefficient * (Vector3.Dot(v3_Norm, v3_WindEffect - velocity) * v3_Norm);
+    Vector3 v3_Viscous_Air => -velocity;
 
     float f_Tou => 0.1f;
 
@@ -43,6 +61,7 @@ public class Node : MonoBehaviour
 
         Spring spring = new Spring(forceType, m, n);
         m.list_spring.Add(spring);
+        n.list_spring.Add(spring);
     }
 
     public void Compute()
@@ -54,21 +73,19 @@ public class Node : MonoBehaviour
 
         v3_TotalForce += v3_Gravity;
 
-        v3_TotalForce += v3_Viscous;
+        v3_TotalForce += v3_Viscous_Wind + v3_Viscous_Air;
 
         accel = v3_TotalForce / f_Mass;
         velocity = velocity + f_DeltaTime * accel;
         v3_Position = v3_Position + f_DeltaTime * velocity;
-
-        float mag = 1.0f / (1.0f + (float)Mathf.Exp(-v3_TotalForce.magnitude / 30f));
-        Debug.DrawLine(v3_Position, v3_Position + v3_TotalForce.normalized * 2, Color.Lerp(Color.green, Color.yellow, mag), Node.f_DeltaTime);
     }
+
 }
 
 public class Spring
 {
     float f_OriginialLength;
-    float f_K = 1;
+    float f_K => 30;
 
     Node m, n;
 
@@ -105,6 +122,20 @@ public class Spring
 
         float mag = 1.0f / (1.0f + (float)Mathf.Exp(-v3_ForceAtM.magnitude / 30f));
         Debug.DrawLine(m.v3_Position, n.v3_Position, Color.Lerp(Color.blue, Color.red, mag), Node.f_DeltaTime);
+        /*switch (forceType)
+        {
+            case ForceType.Structural:
+                Debug.DrawLine(m.v3_Position, n.v3_Position, Color.red, Node.f_DeltaTime);
+                break;
+            case ForceType.Shear:
+                Debug.DrawLine(m.v3_Position, n.v3_Position, Color.blue, Node.f_DeltaTime);
+                break;
+            case ForceType.Flexion:
+                Debug.DrawLine(m.v3_Position, n.v3_Position, Color.green, Node.f_DeltaTime);
+                break;
+            default:
+                break;
+        }*/
     }
 
 
