@@ -45,6 +45,7 @@ public class MeshGenerator : MonoBehaviour
                 node_arr[x, y] = node;
             }
         }
+
         node_arr[0, ySize].rigidbody.isKinematic = true;
         node_arr[xSize, ySize].rigidbody.isKinematic = true;
 

@@ -38,12 +38,12 @@ public class Node : MonoBehaviour
         }
     }
 
-    Vector3 v3_WindEffect => Vector3.forward * f_Mass * 10;
+    Vector3 v3_WindEffect => new Vector3(0.1f, 0, 1f) * f_Mass * 100;
     float f_DampingCoefficient = 1.0f;
     Vector3 v3_Viscous_Wind => f_DampingCoefficient * (Vector3.Dot(v3_Norm, v3_WindEffect - velocity) * v3_Norm);
     Vector3 v3_Viscous_Air => -velocity;
 
-    float f_Tou => 0.1f;
+    public static float f_Tou => 0.1f;
 
     public static float f_DeltaTime => 0.01f;
 
@@ -120,22 +120,11 @@ public class Spring
 
         v3_ForceAtM = f_K * (n.v3_Position - m.v3_Position) * deltaX;
 
+        v3_ForceAtM *= Mathf.Log(1 + Mathf.Exp((deltaX / f_OriginialLength))) + 1;
+
         float mag = 1.0f / (1.0f + (float)Mathf.Exp(-v3_ForceAtM.magnitude / 30f));
+
         Debug.DrawLine(m.v3_Position, n.v3_Position, Color.Lerp(Color.blue, Color.red, mag), Node.f_DeltaTime);
-        /*switch (forceType)
-        {
-            case ForceType.Structural:
-                Debug.DrawLine(m.v3_Position, n.v3_Position, Color.red, Node.f_DeltaTime);
-                break;
-            case ForceType.Shear:
-                Debug.DrawLine(m.v3_Position, n.v3_Position, Color.blue, Node.f_DeltaTime);
-                break;
-            case ForceType.Flexion:
-                Debug.DrawLine(m.v3_Position, n.v3_Position, Color.green, Node.f_DeltaTime);
-                break;
-            default:
-                break;
-        }*/
     }
 
 
