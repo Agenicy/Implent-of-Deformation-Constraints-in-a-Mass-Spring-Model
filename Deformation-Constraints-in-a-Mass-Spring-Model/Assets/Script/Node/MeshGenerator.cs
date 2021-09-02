@@ -97,11 +97,10 @@ public class MeshGenerator : MonoBehaviour
 
             foreach (var sp in Spring.list_spring_AllSpring)
                 sp.Compute();
-
+            
             for (int x = 0; x <= xSize; x++)
                 for (int y = 0; y <= ySize; y++)
                     node_arr[x, y].Compute();
-
 
             yield return new WaitForSeconds(Node.f_DeltaTime);
         }

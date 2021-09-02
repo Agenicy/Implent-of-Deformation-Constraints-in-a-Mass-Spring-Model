@@ -371,8 +371,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7d98078c3149e83429e12432cc7dc7e3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  xSize: 20
-  ySize: 20
+  xSize: 17
+  ySize: 17
   prefab_Node: {fileID: 7954178857565121126, guid: 192f39b4d5142eb49a6e3d98f46dc8e3, type: 3}
   f_GridSize: 2
 --- !u!4 &1315656152

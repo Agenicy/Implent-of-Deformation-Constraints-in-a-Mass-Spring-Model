@@ -14,7 +14,6 @@ public class Node : MonoBehaviour
         }
     }
 
-    Dictionary<Node, Spring> dict_node_force = new Dictionary<Node, Spring>();
 
     List<Spring> list_spring = new List<Spring>();
 
@@ -38,7 +37,7 @@ public class Node : MonoBehaviour
         }
     }
 
-    Vector3 v3_WindEffect => new Vector3(0.1f, 0, 1f) * f_Mass * 100;
+    Vector3 v3_WindEffect => new Vector3(0.1f, 0, 1f) * f_Mass * 0.1f;
     float f_DampingCoefficient = 1.0f;
     Vector3 v3_Viscous_Wind => f_DampingCoefficient * (Vector3.Dot(v3_Norm, v3_WindEffect - velocity) * v3_Norm);
     Vector3 v3_Viscous_Air => -velocity;
@@ -69,7 +68,9 @@ public class Node : MonoBehaviour
         v3_TotalForce = Vector3.zero;
 
         foreach (var spring in list_spring)
+        {
             v3_TotalForce += spring.GetForce(this);
+        }
 
         v3_TotalForce += v3_Gravity;
 
@@ -79,13 +80,12 @@ public class Node : MonoBehaviour
         velocity = velocity + f_DeltaTime * accel;
         v3_Position = v3_Position + f_DeltaTime * velocity;
     }
-
 }
 
 public class Spring
 {
     float f_OriginialLength;
-    float f_K => 30;
+    public static float f_K => 30;
 
     Node m, n;
 
@@ -116,12 +116,12 @@ public class Spring
     public void Compute()
     {
         float nowLength = Vector3.Distance(m.v3_Position, n.v3_Position);
-        float deltaX = Mathf.Max(nowLength - f_OriginialLength, 0);
+        float deltaX = nowLength - f_OriginialLength;
 
         v3_ForceAtM = f_K * (n.v3_Position - m.v3_Position) * deltaX;
-
-        v3_ForceAtM *= Mathf.Log(1 + Mathf.Exp((deltaX / f_OriginialLength))) + 1;
-
+        
+        if (forceType != ForceType.Flexion && deltaX / f_OriginialLength >= Node.f_Tou)
+            v3_ForceAtM *= 10 * f_K * Mathf.Max(0, deltaX / f_OriginialLength - Node.f_Tou);
         float mag = 1.0f / (1.0f + (float)Mathf.Exp(-v3_ForceAtM.magnitude / 30f));
 
         Debug.DrawLine(m.v3_Position, n.v3_Position, Color.Lerp(Color.blue, Color.red, mag), Node.f_DeltaTime);
@@ -130,7 +130,11 @@ public class Spring
 
     public Vector3 GetForce(Node self)
     {
-        return m == self ? v3_ForceAtM : -v3_ForceAtM;
+        return  (m == self) ? v3_ForceAtM : -v3_ForceAtM;
+    }
 
+    public Node GetPoint(Node self)
+    {
+        return m == self ? n : m;
     }
 }
