@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class MeshGenerator : MonoBehaviour
 {
@@ -14,7 +15,17 @@ public class MeshGenerator : MonoBehaviour
 
     public float f_GridSize;
 
+    public Vector3 Wind;
+
     public static Node[,] node_arr;
+
+    [SerializeField] Text text;
+
+   public enum ForceType
+    {
+        ReLU
+    }
+    public ForceType forceType = ForceType.ReLU;
 
     private void Awake()
     {
@@ -24,6 +35,17 @@ public class MeshGenerator : MonoBehaviour
     void OnDestroy()
     {
         Get = null;
+    }
+
+    private void Update()
+    {
+        text.text =
+            $"xSize = {xSize}\n" +
+            $"ySize = {ySize}\n" +
+            $"\n" +
+            $"Force Type = {forceType}\n" +
+            $"\n" +
+            node_arr[xSize/2, ySize/2].Info;
     }
 
     private void Generate()
